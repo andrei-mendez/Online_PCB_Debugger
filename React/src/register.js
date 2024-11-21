@@ -85,7 +85,7 @@ const Register = () => {
             navigate('/login');
             
             } catch (error){
-                console.error('There was a problme with the fetch operation:', error);
+                console.error('There was a problem with the fetch operation:', error);
                 setError(true);
             }
         }

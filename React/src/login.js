@@ -6,37 +6,68 @@ const Login = (props) => {
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [loginError, setLoginError] = useState('') // New state to track login error
 
   const navigate = useNavigate()
 
-  //when ever login button is clicked
-  const onButtonClick = () => {
-    // Set initial error values to empty
+  // Function to handle form submission (Login)
+  const onButtonClick = async () => {
+    // Reset errors
     setEmailError('')
     setPasswordError('')
-
-    // Check if the user has entered both fields correctly
+    setLoginError('')
+  
+    // Validate inputs
     if ('' === email) {
       setEmailError('Please enter your email')
       return
     }
-
+  
     if (!/^[\w.-]+@[\w-]+\.[\w]{2,4}$/.test(email)) {
       setEmailError('Please enter a valid email')
       return
     }
-
+  
     if ('' === password) {
       setPasswordError('Please enter a password')
       return
     }
-
+  
     if (password.length < 7) {
       setPasswordError('The password must be 8 characters or longer')
       return
     }
-
-    // Authentication calls will be made here...
+  
+    const formData = new URLSearchParams()
+    formData.append('username', email)
+    formData.append('password', password)
+  
+    try {
+      const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',  // Ensure correct Content-Type
+        },
+        body: formData.toString(),  // Send the form data
+      })
+  
+      if (!response.ok) {
+        const errorData = await response.json()
+        setLoginError(errorData.detail || 'Login failed')
+        return
+      }
+  
+      const data = await response.json()
+      console.log(data)
+  
+      // Store token and redirect
+      localStorage.setItem('authToken', data.access_token)
+      navigate('/dashboard')
+  
+    } catch (error) {
+      console.error('There was a problem with the fetch operation:', error)
+      setLoginError('There was a problem with the login request')
+    }
   }
 
   return (
@@ -69,6 +100,10 @@ const Login = (props) => {
         <input className={'inputButton'} type="button" onClick={onButtonClick} value={'Log in'} />
       </div>
       <br />
+
+      {/* Show login error message if any */}
+      {loginError && <div className="errorMessage">{loginError}</div>}
+
       {/* Add Sign Up link */}
       <div className="signupLink">
         <p>

@@ -1,0 +1,58 @@
+/* Container for the textarea and line numbers */
+.textarea-container {
+    display: flex;
+    width: 75%;
+    height: 100%;
+    background-color: #323232;
+    position: relative;
+    overflow: hidden; /* Prevent extra scrollbars */
+    box-sizing: border-box;
+    align-items: flex-start; /* Align both elements at the top */
+}
+
+/* Left side for line numbers */
+.line-numbers {
+    color: #999999;
+    font-family: monospace; /* Ensure the same font for both line numbers and text */
+    font-size: 14px;
+    line-height: .5; /* Set the same line height for text and numbers */
+    text-align: right;
+    background-color: #3B3B3B;
+    overflow-y: hidden; /* Remove scrollbar from line numbers */
+    white-space: pre-wrap;
+    padding-left: 5px;
+    height: 100%;
+    max-width: 50px;
+    box-sizing: border-box;
+    position: relative;
+    margin: 0; /* Ensure no margins */
+    padding-top: 0px; /* Add padding for alignment */
+    padding-bottom: 0px;
+}
+
+/* Textarea for user input */
+.textarea {
+    background-color: #323232;
+    color: #ffffff;
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 22px;
+    line-height: 1; /* Ensure line height matches for alignment */
+    border: none;
+    outline: none;
+    resize: none;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    margin: 0; /* Ensure no margins */
+    padding-top: 0px; /* Add padding for alignment */
+    padding-bottom: 0px;
+}
+
+/* Styling for active line */
+.textarea-container .active-line {
+    background-color: #999999;
+    color: #ffffff;
+}

@@ -1,0 +1,79 @@
+/* ButtonStyles.css */
+
+/* Styling for AppBar */
+.MuiAppBar-root {
+    background-color: #0C4459;
+    padding: 0px;
+    margin: 0;
+}
+
+/* Styling for Buttons */
+.MuiButton-root.button {
+    background-color: #99bddc;
+    color: #0C4459;
+    width: 75px; /* Define fixed width */
+    height: 25px; /* Define fixed height */
+    display: flex; /* Ensures proper flex behavior */
+    justify-content: center; /* Center text horizontally */
+    align-items: center; /* Center text vertically */
+    font-size: 8px;
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+.MuiTypography-root {
+    margin-right: 30px; /* Increase the margin to add space between title and buttons */
+}
+
+/* Styling for Command Text Box */
+.MuiBox-root.command-text-box {
+    flex: 2;
+    padding-right: 2px;
+}
+
+/* Styling for Graph Section */
+.MuiBox-root.graphs-section {
+    flex: 1;
+    padding-left: 2px;
+    border-left: 1px solid #757575;
+    background-color: #757575;
+}
+
+.MuiBox-root.graphs-container {
+    width: 100%;
+    height: 300px;
+    background-color: #757575;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+}
+
+.MuiTypography-root.graph-placeholder {
+    color: #9DC3E4;
+}
+
+/* Remove the border from the TextField's outer container */
+.command-text-box .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+    border: none !important;
+}
+
+/* Ensure there is no border when the TextField is focused */
+.command-text-box .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border: none !important;
+}
+
+/* Optional: Customize background color */
+.command-text-box .MuiInputBase-root {
+    background-color: #323232; /* Dark gray background color */
+}
+
+/* Remove shadow or glow on focus */
+.command-text-box .MuiOutlinedInput-root.Mui-focused {
+    box-shadow: none !important;
+}
+
+/* Optional: If you're using a label and want to hide it */
+.command-text-box .MuiInputLabel-root {
+    display: none;
+}
