@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from typing import List
+from typing import Union
 
 class User(BaseModel):
     name: str = Field(..., min_length=1)  # name must have a minimum length of 1
@@ -21,3 +22,6 @@ class TokenData(BaseModel):
 
 class CommandRequest(BaseModel):
     commands: List[str]
+
+class EmailModel(BaseModel):
+    addresses: List[str]

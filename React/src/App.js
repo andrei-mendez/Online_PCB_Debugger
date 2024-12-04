@@ -1,4 +1,3 @@
-// src/App.js
 import { Route, Routes, useNavigate } from 'react-router-dom';
 import Home from './home';
 import Login from './login';
@@ -6,19 +5,19 @@ import Register from './register';
 import './App.css';
 import { useEffect, useState } from 'react';
 import Dashboard from './dashboard';  // Import the Dashboard component
+import Verify from './verify';  // Make sure to import Verify here
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
 
-  const navigate = useNavigate();  // Initialize the navigate function
+  const navigate = useNavigate();
 
-  // UseEffect hook to redirect if the user is logged in
   useEffect(() => {
     if (loggedIn) {
-      navigate('/dashboard');  // Redirect to the dashboard if logged in
+      navigate('/dashboard');
     }
-  }, [loggedIn, navigate]);  // Depend on `loggedIn` so it runs when the state changes
+  }, [loggedIn, navigate]);
 
   return (
     <div className="App">
@@ -26,7 +25,8 @@ function App() {
         <Route path="/" element={<Home email={email} loggedIn={loggedIn} setLoggedIn={setLoggedIn} />} />
         <Route path="/login" element={<Login setLoggedIn={setLoggedIn} setEmail={setEmail} />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />  {/* Dashboard route */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/verify/:token" element={<Verify />} /> {/* Add the Verify route */}
       </Routes>
     </div>
   );

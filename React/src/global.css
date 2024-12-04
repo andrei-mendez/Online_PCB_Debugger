@@ -1,13 +1,8 @@
 /* Global Styles */
 
 html, body, AppBar {
-
     height: 100%;
- 
     margin: 0; /* Remove default margin */
- 
     padding: 0;
- 
     width: 100%;
- 
   }

@@ -1,16 +1,23 @@
 # main.py
 from fastapi import FastAPI, HTTPException, Depends, WebSocket
+from fastapi.responses import JSONResponse  # Add this import for JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-from models import User, Login, Token, TokenData, CommandRequest  # Adjust the import based on your file structure
-
-from database import create_user, find_user_by_email, Hash
+from models import User, Login, Token, TokenData, CommandRequest, EmailModel  # Adjust the import based on your file structure
+from database import users, create_user, find_user_by_email, Hash, send_verification_email
 from fastapi.middleware.cors import CORSMiddleware
 from bson import ObjectId
 import pyvisa
 from pyvisa import ResourceManager, VisaIOError
 import time
+from mail import mail, create_message
+from itsdangerous import URLSafeTimedSerializer
+import logging
+from fastapi import BackgroundTasks
+from utils import create_url_safe_token
+from motor.motor_asyncio import AsyncIOMotorClient
+from utils import serializer  # Ensure serializer is properly imported
 
 # FastAPI initialization
 app = FastAPI()
@@ -44,16 +51,32 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode.update({"exp": expire})  # Update expiration time
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# Token validation
-def verify_token(token: str, credentials_exception: HTTPException):
+#token validation
+@app.get("/verify/{token}")
+async def verify_email(token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        return TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
+        # Decode the token and get the email
+        decoded_data = decode_url_safe_token(token)  # Assuming your decoding logic here
+        email = decoded_data.get("email")
+
+        # Ensure email exists in the database
+        print(f"Finding user with email: {email}")
+        user = await users.find_one({"email": email})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # If the user is already verified, return an appropriate message
+        if user.get("is_verified"):
+            return JSONResponse(content={"message": "Email already verified!"})
+
+        # Update the user to mark them as verified
+        await users.update_one({"email": email}, {"$set": {"is_verified": True}})
+
+        return JSONResponse(content={"message": "Email successfully verified!"})
+
+    except Exception as e:
+        logging.error(f"Error during email verification: {e}")
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
 
 # OAuth2 scheme for token authorization
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -67,10 +90,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     )
     return verify_token(token, credentials_exception)
 
+def decode_url_safe_token(token:str):
+    try:
+        token_data = serializer.loads(token)
+
+        return token_data
+    
+    except Exception as e:
+        logging.error(str(e))
+        
 # Registration endpoint
 @app.post("/register")
-async def register_user(request: User):
-    return await create_user(request)
+async def register_user(request: User, bg_tasks: BackgroundTasks):
+    return await create_user(request, bg_tasks)
 
 # Login endpoint
 @app.post("/login")
@@ -80,12 +112,17 @@ async def login(request: OAuth2PasswordRequestForm = Depends()):
     if not user:
         raise HTTPException(status_code=404, detail="No user found with this email")
 
+    # Check if the user's email is verified
+    if not user.get("is_verified", False):  # Assuming 'is_verified' is a field in your user document
+        raise HTTPException(status_code=400, detail="Email not verified. Please check your inbox to verify your email.")
+
     # Check if the password is correct
     if not Hash.verify(user["password"], request.password):
         raise HTTPException(status_code=403, detail="Incorrect email or password")
 
     # Create access token
     access_token = create_access_token(data={"sub": user["email"]})
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 sleep_timer = 1
@@ -101,7 +138,10 @@ async def websocket_endpoint(websocket: WebSocket, test_id: str):
 def connect_to_power_supply():
     rm = pyvisa.ResourceManager()
     try:
+        
         power_supply = rm.open_resource('USB0::0x1AB1::0x0E11::DP8A253700506::INSTR')  # Replace with actual VISA address
+        #power_supply = rm.open_resource('ASRL1::INSTR')
+        print(f"Inside power supply")
         return power_supply
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -109,6 +149,7 @@ def connect_to_power_supply():
 def set_channel_voltage(channel: int, voltage: float):
     try:
         # Try to connect to the power supply
+        print(f"Before connection")
         power_supply = connect_to_power_supply()
 
         # Check if the connection is valid
@@ -140,9 +181,9 @@ def set_channel_voltage(channel: int, voltage: float):
         raise HTTPException(status_code=500, detail="An error occurred while setting the channel voltage.")
 
 
-class MockPowerSupply:
-    def write(self, command: str):
-        print(f"Mock Power Supply received command: {command}")
+#class MockPowerSupply:
+    #def write(self, command: str):
+       # print(f"Mock Power Supply received command: {command}")
 
 #def connect_to_power_supply():
     # Return a mock power supply object for testing
@@ -267,6 +308,10 @@ async def process_commands(request: CommandRequest):
             else:
                 responses.append("Error processing SETV command: Invalid command format. Expected 'SETV <channel>, <voltage>'.")
         
+        elif q[:4] == 'SSSS':
+            rm = pyvisa.ResourceManager()
+            print(rm.list_resources())
+
             #responses.append(measure_voltage())
         # Handle SETC command
         elif q[:4] == 'SETC':
